@@ -44,9 +44,6 @@ interface Transaction {
     name: string
     type: string
   } | null
-  accounts: {
-    name: string
-  } | null
 }
 
 export default function TransactionsPage() {
@@ -88,10 +85,9 @@ export default function TransactionsPage() {
       .from('transactions')
       .select(`
         *,
-        categories(name, type),
-        accounts!inner(name, household_id)
+        categories(name, type)
       `)
-      .eq('accounts.household_id', member.household_id)
+      .eq('created_by', user.id)
       .order('txn_date', { ascending: false })
       .order('created_at', { ascending: false })
 
@@ -310,8 +306,7 @@ export default function TransactionsPage() {
                               )}
                             </div>
                             <p className="text-xs text-gray-500">
-                              {txn.accounts?.name}
-                              {txn.note && txn.categories?.name && ` • ${txn.note}`}
+                              {txn.note || txn.categories?.name || 'Transaction'}
                             </p>
                           </div>
                         </div>

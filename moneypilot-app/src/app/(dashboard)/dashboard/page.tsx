@@ -24,15 +24,10 @@ export default async function DashboardPage() {
   const householdId = member?.household_id
   const displayName = (member as any)?.profiles?.display_name || user?.email?.split('@')[0] || 'User'
 
-  const { data: accounts } = await supabase
-    .from('accounts')
-    .select('*')
-    .eq('household_id', householdId)
-
   const { data: transactions } = await supabase
     .from('transactions')
-    .select('*, categories(*), accounts(*)')
-    .eq('accounts.household_id', householdId)
+    .select('*, categories(*)')
+    .eq('created_by', user?.id)
     .order('txn_date', { ascending: false })
     .limit(10)
 
@@ -49,13 +44,14 @@ export default async function DashboardPage() {
     .limit(1)
     .single()
 
-  const totalAssets = accounts?.filter(a => ['checking', 'savings', 'cash', 'investment'].includes(a.type))
-    .reduce((sum, a) => sum + (a.balance || 0), 0) || 0
+  // Calculate totals from transactions
+  const totalIncome = transactions?.filter(t => t.type === 'income')
+    .reduce((sum, t) => sum + t.amount, 0) || 0
   
-  const totalLiabilities = accounts?.filter(a => ['credit', 'loan'].includes(a.type))
-    .reduce((sum, a) => sum + Math.abs(a.balance || 0), 0) || 0
+  const totalExpenses = transactions?.filter(t => t.type === 'expense')
+    .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0
 
-  const netWorth = totalAssets - totalLiabilities
+  const netBalance = totalIncome - totalExpenses
 
   const thisMonthTransactions = transactions?.filter(t => {
     const txnDate = new Date(t.txn_date)
@@ -81,7 +77,7 @@ export default async function DashboardPage() {
     .filter(t => t.is_credit === true)
     .reduce((sum, t) => sum + Math.abs(t.amount), 0)
 
-  const currency = accounts?.[0]?.currency || 'JPY'
+  const currency = 'JPY'
 
   return (
     <div className="space-y-4 lg:space-y-6">
@@ -106,7 +102,7 @@ export default async function DashboardPage() {
               <div>
                 <p className="text-gray-400 text-sm">Total Net Worth</p>
                 <div className="flex items-center gap-2 mt-1">
-                  <span className="text-2xl lg:text-3xl font-bold">{formatCurrency(netWorth, currency)}</span>
+                  <span className="text-2xl lg:text-3xl font-bold">{formatCurrency(netBalance, currency)}</span>
                   <span className="text-success text-sm flex items-center">
                     <ArrowUpRight className="h-4 w-4" />
                     +2.4%

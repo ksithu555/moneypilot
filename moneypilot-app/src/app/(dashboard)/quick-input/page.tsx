@@ -65,9 +65,7 @@ export default function QuickInputPage() {
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
-  const [accounts, setAccounts] = useState<any[]>([])
   const [categories, setCategories] = useState<any[]>([])
-  const [selectedAccount, setSelectedAccount] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedTime, setSelectedTime] = useState(new Date().toTimeString().slice(0, 5))
   const [recentTransactions, setRecentTransactions] = useState<any[]>([])
@@ -91,25 +89,13 @@ export default function QuickInputPage() {
 
     if (!member) return
 
-    const [accountsRes, categoriesRes] = await Promise.all([
-      supabase
-        .from('accounts')
-        .select('*')
-        .eq('household_id', member.household_id),
-      supabase
-        .from('categories')
-        .select('*')
-        .eq('household_id', member.household_id)
-    ])
+    const { data: categoriesData } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('household_id', member.household_id)
 
-    if (accountsRes.data) {
-      setAccounts(accountsRes.data)
-      if (accountsRes.data.length > 0) {
-        setSelectedAccount(accountsRes.data[0].id)
-      }
-    }
-    if (categoriesRes.data) {
-      setCategories(categoriesRes.data)
+    if (categoriesData) {
+      setCategories(categoriesData)
     }
 
     // Load recent transactions
@@ -127,7 +113,7 @@ export default function QuickInputPage() {
   }
 
   const handleSubmit = async () => {
-    if (!amount || !selectedCategory || !selectedAccount) return
+    if (!amount || !selectedCategory) return
 
     setLoading(true)
 
@@ -148,7 +134,7 @@ export default function QuickInputPage() {
     const { error } = await supabase
       .from('transactions')
       .insert({
-        account_id: selectedAccount,
+        account_id: null,
         category_id: dbCategory?.id || null,
         amount: parseFloat(amount),
         type: type,
@@ -331,29 +317,6 @@ export default function QuickInputPage() {
         </div>
       </div>
 
-      {/* Account Selection */}
-      {accounts.length > 0 && (
-        <div>
-          <Label className="text-sm text-gray-500 mb-3 block">Account</Label>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            {accounts.map((account) => (
-              <button
-                key={account.id}
-                onClick={() => setSelectedAccount(account.id)}
-                className={cn(
-                  'flex-shrink-0 px-4 py-2 rounded-lg text-sm font-medium transition-all',
-                  selectedAccount === account.id
-                    ? 'bg-navy-900 text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                )}
-              >
-                {account.name}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-
       {/* Note Input */}
       <div>
         <Label className="text-sm text-gray-500 mb-2 block">Note (optional)</Label>
@@ -368,7 +331,7 @@ export default function QuickInputPage() {
       {/* Submit Button */}
       <Button
         onClick={handleSubmit}
-        disabled={!amount || !selectedCategory || !selectedAccount || loading}
+        disabled={!amount || !selectedCategory || loading}
         className={cn(
           'w-full h-14 text-lg font-medium',
           type === 'expense' 
