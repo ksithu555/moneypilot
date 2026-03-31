@@ -5,22 +5,22 @@ import { createClient } from '@/lib/supabase/client'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns'
 
-interface CashflowChartProps {
-  householdId: string | undefined
-}
-
-export function CashflowChart({ householdId }: CashflowChartProps) {
+export function CashflowChart() {
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     async function fetchData() {
-      if (!householdId) return
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
+      // Generate 12 months from April to March (fiscal year style)
       const months = []
-      for (let i = 5; i >= 0; i--) {
-        const date = subMonths(new Date(), i)
+      const now = new Date()
+      // Start from 11 months ago to current month
+      for (let i = 11; i >= 0; i--) {
+        const date = subMonths(now, i)
         months.push({
           start: startOfMonth(date),
           end: endOfMonth(date),
@@ -30,14 +30,14 @@ export function CashflowChart({ householdId }: CashflowChartProps) {
 
       const { data: transactions } = await supabase
         .from('transactions')
-        .select('*, accounts!inner(*)')
-        .eq('accounts.household_id', householdId)
-        .gte('txn_date', months[0].start.toISOString())
-        .lte('txn_date', months[5].end.toISOString())
+        .select('*')
+        .eq('created_by', user.id)
+        .gte('txn_date', format(months[0].start, 'yyyy-MM-dd'))
+        .lte('txn_date', format(months[11].end, 'yyyy-MM-dd'))
 
       const chartData = months.map(month => {
         const monthTxns = transactions?.filter(t => {
-          const txnDate = new Date(t.txn_date)
+          const txnDate = new Date(t.txn_date + 'T00:00:00')
           return txnDate >= month.start && txnDate <= month.end
         }) || []
 
@@ -61,7 +61,7 @@ export function CashflowChart({ householdId }: CashflowChartProps) {
     }
 
     fetchData()
-  }, [householdId, supabase])
+  }, [supabase])
 
   if (loading) {
     return <div className="h-[300px] flex items-center justify-center text-muted-foreground">Loading...</div>

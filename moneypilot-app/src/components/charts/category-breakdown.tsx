@@ -5,20 +5,17 @@ import { createClient } from '@/lib/supabase/client'
 import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from 'recharts'
 import { startOfMonth, endOfMonth } from 'date-fns'
 
-interface CategoryBreakdownProps {
-  householdId: string | undefined
-}
-
 const COLORS = ['#10b981', '#3b82f6', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#06b6d4', '#84cc16']
 
-export function CategoryBreakdown({ householdId }: CategoryBreakdownProps) {
+export function CategoryBreakdown() {
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const supabase = createClient()
 
   useEffect(() => {
     async function fetchData() {
-      if (!householdId) return
+      const { data: { user } } = await supabase.auth.getUser()
+      if (!user) return
 
       const now = new Date()
       const monthStart = startOfMonth(now)
@@ -26,11 +23,11 @@ export function CategoryBreakdown({ householdId }: CategoryBreakdownProps) {
 
       const { data: transactions } = await supabase
         .from('transactions')
-        .select('*, categories(*), accounts!inner(*)')
-        .eq('accounts.household_id', householdId)
+        .select('*, categories(*)')
+        .eq('created_by', user.id)
         .eq('type', 'expense')
-        .gte('txn_date', monthStart.toISOString())
-        .lte('txn_date', monthEnd.toISOString())
+        .gte('txn_date', monthStart.toISOString().split('T')[0])
+        .lte('txn_date', monthEnd.toISOString().split('T')[0])
 
       const categoryTotals: Record<string, { name: string; value: number; color: string }> = {}
 
@@ -53,7 +50,7 @@ export function CategoryBreakdown({ householdId }: CategoryBreakdownProps) {
     }
 
     fetchData()
-  }, [householdId, supabase])
+  }, [supabase])
 
   if (loading) {
     return <div className="h-[300px] flex items-center justify-center text-muted-foreground">Loading...</div>

@@ -216,7 +216,7 @@ export default async function DashboardPage() {
             <p className="text-xs lg:text-sm text-gray-500">Income vs expenses over time</p>
           </CardHeader>
           <CardContent>
-            <CashflowChart householdId={householdId} />
+            <CashflowChart />
           </CardContent>
         </Card>
 
@@ -226,7 +226,7 @@ export default async function DashboardPage() {
             <p className="text-xs lg:text-sm text-gray-500">This month's breakdown</p>
           </CardHeader>
           <CardContent>
-            <CategoryBreakdown householdId={householdId} />
+            <CategoryBreakdown />
           </CardContent>
         </Card>
       </div>
