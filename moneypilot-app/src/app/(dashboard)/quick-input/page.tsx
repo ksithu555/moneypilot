@@ -65,6 +65,7 @@ export default function QuickInputPage() {
   const [note, setNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState(false)
+  const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [categories, setCategories] = useState<any[]>([])
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
   const [selectedTime, setSelectedTime] = useState(new Date().toTimeString().slice(0, 5))
@@ -116,9 +117,16 @@ export default function QuickInputPage() {
     if (!amount || !selectedCategory) return
 
     setLoading(true)
+    setErrorMsg(null)
 
     const { data: { user } } = await supabase.auth.getUser()
     
+    if (!user) {
+      setLoading(false)
+      setErrorMsg('Please log in to add transactions')
+      return
+    }
+
     // Find the matching category from database
     const categoryName = type === 'expense' 
       ? expenseCategories.find(c => c.id === selectedCategory)?.name
@@ -131,23 +139,32 @@ export default function QuickInputPage() {
     // Determine if this is a credit card expense (adds to debt)
     const isCredit = type === 'expense' && paymentMethod === 'credit'
 
-    const { error } = await supabase
+    const insertData = {
+      category_id: dbCategory?.id || null,
+      amount: parseFloat(amount),
+      type: type,
+      txn_date: selectedDate,
+      note: note || categoryName || null,
+      created_by: user.id,
+      payment_method: type === 'expense' ? paymentMethod : null,
+      is_credit: isCredit
+    }
+
+    console.log('Inserting transaction:', insertData)
+
+    const { data, error } = await supabase
       .from('transactions')
-      .insert({
-        account_id: null,
-        category_id: dbCategory?.id || null,
-        amount: parseFloat(amount),
-        type: type,
-        txn_date: selectedDate,
-        note: note || null,
-        created_by: user?.id,
-        payment_method: type === 'expense' ? paymentMethod : null,
-        is_credit: isCredit
-      })
+      .insert(insertData)
+      .select()
+
+    console.log('Insert result:', { data, error })
 
     setLoading(false)
 
-    if (!error) {
+    if (error) {
+      console.error('Insert error:', error)
+      setErrorMsg(error.message || 'Failed to save transaction')
+    } else {
       setSuccess(true)
       // Reload recent transactions
       loadData()
@@ -327,6 +344,13 @@ export default function QuickInputPage() {
           className="h-12"
         />
       </div>
+
+      {/* Error Message */}
+      {errorMsg && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
+          {errorMsg}
+        </div>
+      )}
 
       {/* Submit Button */}
       <Button
