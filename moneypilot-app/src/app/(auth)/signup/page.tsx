@@ -34,10 +34,14 @@ export default function SignupPage() {
     setLoading(true)
     setError(null)
 
+    // Get the current origin for redirect URL (works in both dev and production)
+    const origin = window.location.origin
+    
     const { data: authData, error: authError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: `${origin}/auth/callback`,
         data: {
           display_name: `${firstName} ${lastName}`,
           household_name: householdName,

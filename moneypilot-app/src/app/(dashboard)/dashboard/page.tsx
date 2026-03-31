@@ -24,12 +24,12 @@ export default async function DashboardPage() {
   const householdId = member?.household_id
   const displayName = (member as any)?.profiles?.display_name || user?.email?.split('@')[0] || 'User'
 
+  // Get all transactions for this month (no limit for accurate monthly totals)
   const { data: transactions } = await supabase
     .from('transactions')
     .select('*, categories(*)')
     .eq('created_by', user?.id)
     .order('txn_date', { ascending: false })
-    .limit(10)
 
   const { data: goals } = await supabase
     .from('goals')
@@ -53,10 +53,15 @@ export default async function DashboardPage() {
 
   const netBalance = totalIncome - totalExpenses
 
+  // Use Japan timezone for date comparison
+  const now = new Date()
+  const japanTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
+  const currentMonth = japanTime.getMonth()
+  const currentYear = japanTime.getFullYear()
+
   const thisMonthTransactions = transactions?.filter(t => {
-    const txnDate = new Date(t.txn_date)
-    const now = new Date()
-    return txnDate.getMonth() === now.getMonth() && txnDate.getFullYear() === now.getFullYear()
+    const txnDate = new Date(t.txn_date + 'T00:00:00+09:00') // Parse as JST
+    return txnDate.getMonth() === currentMonth && txnDate.getFullYear() === currentYear
   }) || []
 
   const monthlyIncome = thisMonthTransactions
