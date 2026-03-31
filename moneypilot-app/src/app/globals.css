@@ -1,0 +1,78 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* MoneyPilot Theme - Navy Blue & Green */
+    --background: 210 20% 98%;
+    --foreground: 233 47% 16%;
+    --card: 0 0% 100%;
+    --card-foreground: 233 47% 16%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 233 47% 16%;
+    --primary: 142 71% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 205 79% 95%;
+    --secondary-foreground: 233 47% 16%;
+    --muted: 210 20% 96%;
+    --muted-foreground: 215 16% 47%;
+    --accent: 233 47% 16%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 233 47% 16%;
+    --border: 214 32% 91%;
+    --input: 214 32% 91%;
+    --ring: 142 71% 45%;
+    --radius: 0.75rem;
+    
+    /* Custom navy colors */
+    --navy-900: 233 47% 16%;
+    --navy-950: 235 52% 12%;
+  }
+
+  .dark {
+    --background: 233 47% 16%;
+    --foreground: 210 20% 98%;
+    --card: 235 40% 20%;
+    --card-foreground: 210 20% 98%;
+    --popover: 235 40% 20%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 142 71% 45%;
+    --primary-foreground: 0 0% 100%;
+    --secondary: 235 35% 25%;
+    --secondary-foreground: 210 20% 98%;
+    --muted: 235 35% 25%;
+    --muted-foreground: 215 20% 65%;
+    --accent: 142 71% 45%;
+    --accent-foreground: 0 0% 100%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 20% 98%;
+    --success: 142 71% 45%;
+    --success-foreground: 0 0% 100%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 233 47% 16%;
+    --border: 235 35% 25%;
+    --input: 235 35% 25%;
+    --ring: 142 71% 45%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground antialiased;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
