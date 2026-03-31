@@ -67,7 +67,11 @@ export default function QuickInputPage() {
   const [success, setSuccess] = useState(false)
   const [errorMsg, setErrorMsg] = useState<string | null>(null)
   const [categories, setCategories] = useState<any[]>([])
-  const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0])
+  // Use local date to avoid timezone issues (toISOString converts to UTC)
+  const [selectedDate, setSelectedDate] = useState(() => {
+    const now = new Date()
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+  })
   const [selectedTime, setSelectedTime] = useState(new Date().toTimeString().slice(0, 5))
   const [recentTransactions, setRecentTransactions] = useState<any[]>([])
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'credit'>('cash')
