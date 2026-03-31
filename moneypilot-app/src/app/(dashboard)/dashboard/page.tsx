@@ -6,7 +6,8 @@ import { CategoryBreakdown } from '@/components/charts/category-breakdown'
 import { GoalsProgress } from '@/components/dashboard/goals-progress'
 import { RecentTransactions } from '@/components/dashboard/recent-transactions'
 import { AiInsightsCard } from '@/components/dashboard/ai-insights-card'
-import { TrendingUp, TrendingDown, Wallet, Target, ArrowUpRight, Eye, EyeOff, PiggyBank, CreditCard } from 'lucide-react'
+import { ArrowUpRight, Eye } from 'lucide-react'
+import { MonthlyStats } from '@/components/dashboard/monthly-stats'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
 
@@ -45,43 +46,13 @@ export default async function DashboardPage() {
     .single()
 
   // Calculate totals from transactions
-  const totalIncome = transactions?.filter(t => t.type === 'income')
+  const totalIncome = (transactions as any[])?.filter(t => t.type === 'income')
     .reduce((sum, t) => sum + t.amount, 0) || 0
   
-  const totalExpenses = transactions?.filter(t => t.type === 'expense')
+  const totalExpenses = (transactions as any[])?.filter(t => t.type === 'expense')
     .reduce((sum, t) => sum + Math.abs(t.amount), 0) || 0
 
   const netBalance = totalIncome - totalExpenses
-
-  // Use Japan timezone for date comparison
-  const now = new Date()
-  const japanTime = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Tokyo' }))
-  const currentMonth = japanTime.getMonth()
-  const currentYear = japanTime.getFullYear()
-
-  const thisMonthTransactions = transactions?.filter(t => {
-    const txnDate = new Date(t.txn_date + 'T00:00:00+09:00') // Parse as JST
-    return txnDate.getMonth() === currentMonth && txnDate.getFullYear() === currentYear
-  }) || []
-
-  const monthlyIncome = thisMonthTransactions
-    .filter(t => t.type === 'income')
-    .reduce((sum, t) => sum + t.amount, 0)
-
-  const monthlyExpenses = thisMonthTransactions
-    .filter(t => t.type === 'expense')
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-
-  // Monthly savings (expenses with category name containing 'saving')
-  const monthlySavings = thisMonthTransactions
-    .filter(t => t.type === 'expense' && t.categories?.name?.toLowerCase().includes('saving'))
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-
-  // Monthly debt (credit card expenses)
-  const monthlyDebt = thisMonthTransactions
-    .filter(t => t.is_credit === true)
-    .reduce((sum, t) => sum + Math.abs(t.amount), 0)
-
   const currency = 'JPY'
 
   return (
@@ -143,64 +114,8 @@ export default async function DashboardPage() {
           </CardContent>
         </Card>
 
-        {/* Quick Stats - Horizontal scroll on mobile */}
-        <div className="flex lg:flex-col gap-3 lg:gap-4 overflow-x-auto pb-2 lg:pb-0 -mx-4 px-4 lg:mx-0 lg:px-0">
-          <Card className="border border-gray-200 min-w-[160px] lg:min-w-0 flex-shrink-0 lg:flex-shrink">
-            <CardContent className="p-4 lg:p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs lg:text-sm text-gray-500">Monthly Income</p>
-                  <p className="text-lg lg:text-2xl font-bold text-success mt-1">{formatCurrency(monthlyIncome, currency)}</p>
-                </div>
-                <div className="w-10 h-10 bg-success/10 rounded-full flex items-center justify-center">
-                  <TrendingUp className="h-5 w-5 text-success" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-gray-200 min-w-[160px] lg:min-w-0 flex-shrink-0 lg:flex-shrink">
-            <CardContent className="p-4 lg:p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs lg:text-sm text-gray-500">Monthly Expenses</p>
-                  <p className="text-lg lg:text-2xl font-bold text-red-500 mt-1">{formatCurrency(monthlyExpenses, currency)}</p>
-                </div>
-                <div className="w-10 h-10 bg-red-50 rounded-full flex items-center justify-center">
-                  <TrendingDown className="h-5 w-5 text-red-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-gray-200 min-w-[160px] lg:min-w-0 flex-shrink-0 lg:flex-shrink">
-            <CardContent className="p-4 lg:p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs lg:text-sm text-gray-500">Monthly Savings</p>
-                  <p className="text-lg lg:text-2xl font-bold text-emerald-600 mt-1">{formatCurrency(monthlySavings, currency)}</p>
-                </div>
-                <div className="w-10 h-10 bg-emerald-50 rounded-full flex items-center justify-center">
-                  <PiggyBank className="h-5 w-5 text-emerald-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border border-gray-200 min-w-[160px] lg:min-w-0 flex-shrink-0 lg:flex-shrink">
-            <CardContent className="p-4 lg:p-5">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-xs lg:text-sm text-gray-500">Credit Card Debt</p>
-                  <p className="text-lg lg:text-2xl font-bold text-orange-500 mt-1">{formatCurrency(monthlyDebt, currency)}</p>
-                </div>
-                <div className="w-10 h-10 bg-orange-50 rounded-full flex items-center justify-center">
-                  <CreditCard className="h-5 w-5 text-orange-500" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+        {/* Quick Stats - Client component for accurate monthly data */}
+        <MonthlyStats />
       </div>
 
       {/* Charts Row */}
