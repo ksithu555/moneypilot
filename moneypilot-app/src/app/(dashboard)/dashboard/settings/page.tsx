@@ -77,7 +77,7 @@ export default function SettingsPage() {
       .from('profiles')
       .select('display_name')
       .eq('id', user.id)
-      .single()
+      .single() as { data: { display_name: string | null } | null }
 
     if (profile) {
       setDisplayName(profile.display_name || '')
@@ -88,21 +88,21 @@ export default function SettingsPage() {
       .from('household_members')
       .select('household_id, role, households(name)')
       .eq('profile_id', user.id)
-      .single()
+      .single() as { data: { household_id: string; role: string; households: { name: string } | null } | null }
 
     if (membership) {
       setHouseholdId(membership.household_id)
-      setHouseholdName((membership.households as any)?.name || '')
+      setHouseholdName(membership.households?.name || '')
       setIsOwner(membership.role === 'owner')
 
       // Get all members
       const { data: allMembers } = await supabase
         .from('household_members')
         .select('id, role, profiles(id, display_name, email)')
-        .eq('household_id', membership.household_id)
+        .eq('household_id', membership.household_id) as { data: Member[] | null }
 
       if (allMembers) {
-        setMembers(allMembers as any)
+        setMembers(allMembers)
       }
     }
 

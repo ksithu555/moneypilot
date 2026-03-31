@@ -80,7 +80,7 @@ export default function HouseholdPage() {
       .from('household_members')
       .select('*, households(*)')
       .eq('profile_id', user.id)
-      .single()
+      .single() as { data: { household_id: string; role: string; households: { name: string; currency: string } | null } | null }
 
     if (!membership) {
       setLoading(false)
@@ -97,7 +97,7 @@ export default function HouseholdPage() {
     const { data: membersData } = await supabase
       .from('household_members')
       .select('*, profiles(*)')
-      .eq('household_id', membership.household_id)
+      .eq('household_id', membership.household_id) as { data: Array<{ id: string; profile_id: string; role: string; profiles: { id: string; display_name: string; avatar_url: string | null } | null }> | null }
 
     // Get transactions for this month to calculate income/expenses per member
     const startOfMonth = new Date()
